@@ -4,7 +4,6 @@ from urllib import request, parse, error
 class Network(object):
     def __init__(self):
         # Dirty hack.
-        # ??
         major, minor, _, _, _ = sys.version_info
         if major == 3 and minor < 5:
             self.has_quote_plus = False

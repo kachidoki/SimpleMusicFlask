@@ -18,7 +18,7 @@ class QQApi(object):
             'size320':'M800'
             }
 
-    def Search(self, keyword, page, limit = 8):
+    def Search(self, keyword, page, limit = 10):
         param = {
             'p':page,
             'n':limit,
@@ -28,11 +28,12 @@ class QQApi(object):
             'cr':1}
 
         uri = self.search_url + self.network.urlencode(param)
+        #print(uri)
         data = self.network.urlrequest(uri)
         if not data:
             return None
 
-        return self.Parse(data)
+        return self.parser.SearchParse(data)
 
 
     def GetTop(self, topid):
@@ -45,26 +46,15 @@ class QQApi(object):
         #print(res_song_list)
         return (date, song_nums, res_song_list)
 
+    def WrapRecommend(self, rd_list, limit=20):
+        if not rd_list:
+            return []
+        res_rd_list = []
+        for song in rd_list:
+            wraped_song = self.parser.WrapRDSong(song)
+            res_rd_list.append(wraped_song)
+        return res_rd_list
 
-    def Parse(self, js_data):
-        size = len(js_data)
-        raw_dict = json.loads(js_data[9:size - 1])
-        data_dict = raw_dict['data']
-        song_dict = data_dict['song']
-        song_list = song_dict['list']
-        simple_song_list = []
-        for x in song_list:
-            simple_song_dict = {}
-            simple_song_dict['songname'] = x['songname']
-            simple_song_dict['songid'] = x['songmid']
-            simple_song_dict['albumurl'] = self.album_url + x['albummid'] + '.jpg'
-            simple_singer_list = []
-            for k in x['singer']:
-                simple_singer_list.append(k['name'])
-            simple_song_dict['singername'] = simple_singer_list
-            simple_song_list.append(simple_song_dict)
-
-        return simple_song_list
 
     def GetMediaUrl(self, songid, size = 'size320'):
         guid = int(random.random() * 1000000000)
@@ -98,5 +88,9 @@ if __name__ == '__main__':
         url = Api.GetMediaUrl(x['songid'])
         print(url)
     '''
+
     Api = QQApi()
     Api.GetTop(4)
+
+    #url = Api.GetMediaUrl('003TfyNp47dm7E')
+    #print(url)

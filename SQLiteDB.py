@@ -1,5 +1,7 @@
-import sqlite3, logging
+import sqlite3, logging ,time
 from datetime import datetime, timedelta
+from Recommendation import recommend
+from MockData import Mock
 
 def dict_factory(cursor, row):
     d = {}
@@ -43,12 +45,89 @@ class SQLiteDB(object):
             )
         """
 
+        sql_create_history = """
+            CREATE TABLE IF NOT EXISTS history(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uid TEXT NOT NULL,
+            songid TEXT NOT NULL,
+            songname TEXT NOT NULL,
+            albummid TEXT,
+            songmid TEXT NOT NULL,
+            singerid TEXT,
+            singername TEXT,
+            albumid TEXT,
+            tmstamp INTEGER NOT NULL
+            )
+        """
+
         try:
             self.cursor.execute(sql_create_song)
             self.cursor.execute(sql_create_savetime)
+            self.cursor.execute(sql_create_history)
             self.connect.commit()
         except sqlite3.Error as e:
             logging.error(e)
+
+
+    # ------- recommend -------
+
+    def history_get_all(self):
+        sql = 'SELECT uid, songmid FROM history'
+        try:
+            self.cursor.execute(sql)
+            data = self.cursor.fetchall()
+            return data
+        except sqlite3.Error as e:
+            logging.info(e)
+            return []
+
+    def user_played_list_fetch(self, client_id):
+        sql = 'SELECT songmid,songname FROM history WHERE uid = ? ORDER BY tmstamp ASC'
+        try:
+            self.cursor.execute(sql, [client_id])
+            data = self.cursor.fetchall()
+            return data
+        except sqlite3.Error as e:
+            logging.info(e)
+            return None
+
+    # 没有曲库，只能从history提取信息
+    def song_fetch_by_ids(self, ids):
+        if None == ids or 0 == len(ids):
+            return None
+        res_list = []
+        for id in ids:
+            sql = 'SELECT songid, songname, albummid, songmid, singerid, singername, albumid FROM history WHERE songmid = ?'
+            try:
+                self.cursor.execute(sql,(id,))
+                data = self.cursor.fetchone()
+                if not data:
+                    continue
+                res_list.append(data)
+            except sqlite3.Error as e:
+                logging.info(e)
+        return res_list
+
+
+    def save_history(self,one_history):
+        sql = 'INSERT INTO history(uid,songid,songname,albummid,songmid,singerid,singername,albumid,tmstamp)VALUES(?,?,?,?,?,?,?,?,?)'
+        data = (one_history['uid'],one_history['songid'],one_history['songname'],one_history['albummid'],one_history['songmid'],one_history['singerid'],one_history['singername'],one_history['albumid'],one_history['tmstamp'])
+        try:
+            self.cursor.execute(sql, data)
+            self.connect.commit()
+        except sqlite3.Error as e:
+            print(e)
+            logging.info(e)
+
+    def save_history_tmp(self,uid,one_history):
+        sql = 'INSERT INTO history(uid,songid,songname,albummid,songmid,singerid,singername,albumid,tmstamp)VALUES(?,?,?,?,?,?,?,?,?)'
+        data = (uid,one_history['songid'],one_history['songname'],one_history['albummid'],one_history['songmid'],one_history['singerid'],one_history['singername'],one_history['albumid'],time.time())
+        try:
+            self.cursor.execute(sql, data)
+            self.connect.commit()
+        except sqlite3.Error as e:
+            print(e)
+            logging.info(e)
 
     # ------- topdate -------
     def save_date(self, topid, date):
@@ -159,10 +238,10 @@ if __name__ == '__main__':
     s = SQLiteDB('/tmp/sqlite3.test')
     s.init_schema()
 
+    '''
     test_list = ([{'songname': 'Bloom', 'seconds': 200, 'albummid': '002Ws4Vf2mZ61h', 'songid': 213849494, 'songmid': '000G3py61tKvTl', 'singerid': 25115, 'singername': 'Troye Sivan', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002Ws4Vf2mZ61h.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002Ws4Vf2mZ61h.jpg', 'downUrl': '', 'url': '', 'albumid': 4033633}, {'songname': '不安', 'seconds': 200, 'albummid': '000kFqNl2ja3e3', 'songid': 213837949, 'songmid': '003F8SsV28SG6r', 'singerid': 89698, 'singername': '庄心妍', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000kFqNl2ja3e3.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000kFqNl2ja3e3.jpg', 'downUrl': '', 'url': '', 'albumid': 4031973}, {'songname': '圆梦一代', 'seconds': 200, 'albummid': '002wxisP3y0bUl', 'songid': 213869570, 'songmid': '000VYFDZ1CWLWa', 'singerid': 91580, 'singername': '王俊凯', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002wxisP3y0bUl.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002wxisP3y0bUl.jpg', 'downUrl': '', 'url': '', 'albumid': 4036249}])
 
     test_list_2 = ([{'songname': '1111', 'seconds': 200, 'albummid': '002Ws4Vf2mZ61h', 'songid': 213849494, 'songmid': '000G3py61tKvTl', 'singerid': 25115, 'singername': 'Troye Sivan', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002Ws4Vf2mZ61h.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002Ws4Vf2mZ61h.jpg', 'downUrl': '', 'url': '', 'albumid': 4033633}, {'songname': '222', 'seconds': 200, 'albummid': '000kFqNl2ja3e3', 'songid': 213837949, 'songmid': '003F8SsV28SG6r', 'singerid': 89698, 'singername': '庄心妍', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000kFqNl2ja3e3.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000kFqNl2ja3e3.jpg', 'downUrl': '', 'url': '', 'albumid': 4031973}, {'songname': '333', 'seconds': 200, 'albummid': '002wxisP3y0bUl', 'songid': 213869570, 'songmid': '000VYFDZ1CWLWa', 'singerid': 91580, 'singername': '王俊凯', 'albumpic_big': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002wxisP3y0bUl.jpg', 'albumpic_small': 'https://y.gtimg.cn/music/photo_new/T002R300x300M000002wxisP3y0bUl.jpg', 'downUrl': '', 'url': '', 'albumid': 4036249}])
-
 
     s.put_top_songs(test_list,4)
     print(s.get_top_songs(4))
@@ -180,7 +259,32 @@ if __name__ == '__main__':
     print(s.get_top_date(4))
     print(s.get_top_date(5))
     print(s.is_need_fetch_top_from_net(5))
+    '''
+
+    history1 = {
+        'uid':'1111',
+        'songid':'213849494',
+        'songname':'Bloom',
+        'albummid':'002Ws4Vf2mZ61h',
+        'songmid':'000G3py61tKvTl',
+        'singerid':25115,
+        'singername':'Troye Sivan',
+        'albumid':4033633,
+        'tmstamp':time.time()
+    }
+
+    #mk = Mock(s)
+    #mk.mock_insert_history()
+
+    #rd = recommend(s)
+    #rd.train_set()
+    #rd.item_similarity()
+    #print(rd.do_recommend('8888',10))
+
+    #s.save_history(history1)
 
 
-
+    #print(s.history_get_all())
+    #print(s.user_played_list_fetch('5555'))
+    #print(s.song_fetch_by_ids(['000G3py61tKvTl']))
     s.close()

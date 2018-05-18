@@ -51,3 +51,48 @@ class QQParser(object):
 
             res_song_list.append(simple_song_dict)
         return (date, song_nums, res_song_list)
+
+    def WrapRDSong(self, rd_song):
+        if not rd_song:
+            return None
+        wraped_song_dict = {}
+        wraped_song_dict['songname'] = rd_song['songname']
+        wraped_song_dict['seconds'] = 200 #读秒咋做？？
+        wraped_song_dict['albummid'] = rd_song['albummid']
+        wraped_song_dict['songid'] = rd_song['songid']
+        wraped_song_dict['songmid'] = rd_song['songmid']
+        wraped_song_dict['singerid'] = rd_song['singerid']
+        wraped_song_dict['singername'] = rd_song['singername']
+        wraped_song_dict['albumpic_big'] = self.album_url + rd_song['albummid'] + '.jpg'
+        wraped_song_dict['albumpic_small'] = self.album_url + rd_song['albummid'] + '.jpg'
+        wraped_song_dict['downUrl'] = ''
+        wraped_song_dict['url'] = ''
+        wraped_song_dict['albumid'] = rd_song['albumid']
+        return wraped_song_dict
+
+
+    def SearchParse(self, js_data):
+        size = len(js_data)
+        raw_dict = json.loads(js_data[9:size - 1])
+        data_dict = raw_dict['data']
+        song_dict = data_dict['song']
+        song_list = song_dict['list']
+        simple_song_list = []
+        for x in song_list:
+            singer_date = x['singer']
+            simple_song_dict = {}
+            simple_song_dict['songname'] = x['songname']
+            simple_song_dict['songid'] = x['songid']
+            simple_song_dict['seconds'] = 200 #读秒咋做？？
+            simple_song_dict['albummid'] = x['albummid']
+            simple_song_dict['songmid'] = x['songmid']
+            simple_song_dict['singerid'] = singer_date[0]['id']
+            simple_song_dict['singername'] = singer_date[0]['name']
+            simple_song_dict['albumpic_big'] = self.album_url + x['albummid'] + '.jpg'
+            simple_song_dict['albumpic_small'] = self.album_url + x['albummid'] + '.jpg'
+            simple_song_dict['downUrl'] = ''
+            simple_song_dict['url'] = ''
+
+            simple_song_list.append(simple_song_dict)
+
+        return simple_song_list

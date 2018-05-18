@@ -18,6 +18,9 @@ class MusicApi(object):
     def GetMediaUrl(self, _id, size = 'size320'):
         return self.Api.GetMediaUrl(_id, size)
 
+    def WrapRecommend(self, rd_list , limit = 20):
+        return self.Api.WrapRecommend(rd_list ,limit)
+
     def Singer(self, simple_song_dict):
         singer = simple_song_dict['singername']
         if not singer:
@@ -39,7 +42,8 @@ class MusicApi(object):
 
 if __name__ == '__main__':
     Api = MusicApi()
-    # songlist = Api.Search('胡桃夹子', 1, 10)
+    #songlist = Api.Search('胡桃夹子', 2, 10)
+    #print(songlist)
     # if not songlist:
     #     sys.exit()
 
@@ -48,6 +52,3 @@ if __name__ == '__main__':
         # print(x)
         # url = Api.GetMediaUrl(x['songid'])
         # print(url)
-
-    url = Api.GetMediaUrl('00467ZRM0dnbeq')
-    print(url)

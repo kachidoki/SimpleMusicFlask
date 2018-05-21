@@ -115,9 +115,10 @@ class SQLiteDB(object):
         try:
             self.cursor.execute(sql, data)
             self.connect.commit()
+            return True
         except sqlite3.Error as e:
-            print(e)
             logging.info(e)
+            return False
 
     def save_history_tmp(self,uid,one_history):
         sql = 'INSERT INTO history(uid,songid,songname,albummid,songmid,singerid,singername,albumid,tmstamp)VALUES(?,?,?,?,?,?,?,?,?)'

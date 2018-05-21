@@ -25,6 +25,16 @@ def api_v1_error():
     error_message = 'Unexpected error'
     return Response(response = error_message, status = 404)
 
+def api_v1_form_error():
+    res = {
+        'res_code': 400,
+        'res_err': 'bad args',
+        'res_body': {}
+    }
+    resp = jsonify(res)
+    resp.status_code = 401
+    return resp
+
 @app.route('/getMediaUrl', methods = ['GET'])
 def api_v1_get_media_url():
     logging.debug(request.args)
@@ -116,6 +126,35 @@ def api_v1_get_recommend_list():
         }
     }
     return jsonify(res)
+
+@app.route('/reportHistory', methods = ['POST'])
+def api_v1_report_history():
+    logging.debug(request.form)
+    history = dict()
+    history['uid'] = request.form.get('uid')
+    history['songid'] = request.form.get('songid')
+    history['songname'] = request.form.get('songname')
+    history['albummid'] = request.form.get('albummid')
+    history['songmid'] = request.form.get('songmid')
+    history['singerid'] = request.form.get('singerid')
+    history['singername'] = request.form.get('singername')
+    history['albumid'] = request.form.get('albumid')
+    history['tmstamp'] = request.form.get('tmstamp')
+    print(history)
+
+    if not history['uid'] or not history['songmid']:
+        return api_v1_form_error()
+
+    if not Db.save_history(history):
+        return api_v1_form_error()
+
+    res = {
+        'res_code': 200,
+        'res_err': '',
+        'res_body': {}
+    }
+    return jsonify(res)
+
 
 
 if __name__ == '__main__':
